@@ -1,17 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
            xsi:type="MailApp">
 
   <Id>11111111-1111-1111-1111-111111111111</Id>
-  <Version>1.0.0.0</Version>
+  <Version>1.0.0.2</Version>
   <ProviderName>Internal</ProviderName>
   <DefaultLocale>he-IL</DefaultLocale>
   <DisplayName DefaultValue="פתח ב-Power Apps"/>
   <Description DefaultValue="פתיחת Power Apps עם מזהי מייל"/>
 
-  <!-- ✔️ זה התיקון החשוב -->
-  <Permissions>ReadItem</Permissions>
+  <IconUrl DefaultValue="https://yanivkoren.github.io/outlook-powerapps/icon-64.png"/>
+  <HighResolutionIconUrl DefaultValue="https://yanivkoren.github.io/outlook-powerapps/icon-128.png"/>
+  <SupportUrl DefaultValue="https://yanivkoren.github.io/outlook-powerapps/"/>
+
+  <AppDomains>
+    <AppDomain>https://yanivkoren.github.io</AppDomain>
+    <AppDomain>https://apps.powerapps.com</AppDomain>
+  </AppDomains>
 
   <Hosts>
     <Host Name="Mailbox"/>
@@ -32,8 +39,76 @@
     </Form>
   </FormSettings>
 
+  <Permissions>ReadItem</Permissions>
+
   <Rule xsi:type="RuleCollection" Mode="Or">
     <Rule xsi:type="ItemIs" ItemType="Message" FormType="Read"/>
   </Rule>
+
+  <DisableEntityHighlighting>false</DisableEntityHighlighting>
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides"
+                    xsi:type="VersionOverridesV1_0">
+    <Requirements>
+      <bt:Sets DefaultMinVersion="1.5">
+        <bt:Set Name="Mailbox"/>
+      </bt:Sets>
+    </Requirements>
+
+    <Hosts>
+      <Host xsi:type="MailHost">
+        <DesktopFormFactor>
+          <FunctionFile resid="functionFileUrl"/>
+
+          <ExtensionPoint xsi:type="MessageReadCommandSurface">
+            <OfficeTab id="TabDefault">
+              <Group id="msgReadGroup">
+                <Label resid="groupLabel"/>
+
+                <Control xsi:type="Button" id="openPowerAppsButton">
+                  <Label resid="buttonLabel"/>
+                  <Supertip>
+                    <Title resid="buttonLabel"/>
+                    <Description resid="buttonDescription"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="icon16"/>
+                    <bt:Image size="32" resid="icon32"/>
+                    <bt:Image size="80" resid="icon80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <SourceLocation resid="taskPaneUrl"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+
+    <Resources>
+      <bt:Images>
+        <bt:Image id="icon16" DefaultValue="https://yanivkoren.github.io/outlook-powerapps/icon-16.png"/>
+        <bt:Image id="icon32" DefaultValue="https://yanivkoren.github.io/outlook-powerapps/icon-32.png"/>
+        <bt:Image id="icon80" DefaultValue="https://yanivkoren.github.io/outlook-powerapps/icon-80.png"/>
+      </bt:Images>
+
+      <bt:Urls>
+        <bt:Url id="functionFileUrl" DefaultValue="https://yanivkoren.github.io/outlook-powerapps/openPowerApps.html"/>
+        <bt:Url id="taskPaneUrl" DefaultValue="https://yanivkoren.github.io/outlook-powerapps/openPowerApps.html"/>
+      </bt:Urls>
+
+      <bt:ShortStrings>
+        <bt:String id="groupLabel" DefaultValue="Power Apps"/>
+        <bt:String id="buttonLabel" DefaultValue="פתח ב-Power Apps"/>
+      </bt:ShortStrings>
+
+      <bt:LongStrings>
+        <bt:String id="buttonDescription" DefaultValue="פתיחת Power Apps מתוך המייל הנוכחי"/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
 
 </OfficeApp>
