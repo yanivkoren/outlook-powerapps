@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>פתח ב-Power Apps</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 16px;
+      direction: rtl;
+    }
+    button {
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #444;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <button id="btn" disabled>פתח ב-Power Apps</button>
+  <div id="status">טוען...</div>
+
+  <script>
+    const APP_URL = "https://apps.powerapps.com/play/appId=APP_ID_HERE";
+
+    function setStatus(text) {
+      document.getElementById("status").textContent = text;
+    }
+
+    Office.onReady(function () {
+      const btn = document.getElementById("btn");
+      btn.disabled = false;
+      setStatus("מוכן.");
+
+      btn.onclick = function () {
+        try {
+          const item = Office.context.mailbox && Office.context.mailbox.item;
+
+          if (!item) {
+            setStatus("לא נמצא מייל פתוח.");
+            return;
+          }
+
+          const rawItemId = item.itemId || "";
+          const convId = item.conversationId || "";
+
+          let msgId = rawItemId;
+          if (Office.context.mailbox.convertToRestId && rawItemId) {
+            msgId = Office.context.mailbox.convertToRestId(
+              rawItemId,
+              Office.MailboxEnums.RestVersion.v2_0
+            );
+          }
+
+          const url = APP_URL
+            + "&msgId=" + encodeURIComponent(msgId)
+            + "&convId=" + encodeURIComponent(convId);
+
+          setStatus("פותח את Power Apps...");
+          window.open(url, "_blank");
+        } catch (err) {
+          setStatus("שגיאה: " + (err && err.message ? err.message : err));
+        }
+      };
+    });
+  </script>
+</body>
+</html>
