@@ -3,51 +3,70 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>פתח ב-Power Apps</title>
+  <title>Power Apps Debug</title>
   <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 16px;
       direction: rtl;
     }
+
     button {
       padding: 10px 14px;
       font-size: 14px;
       cursor: pointer;
+      margin-bottom: 10px;
     }
+
     #status {
-      margin-top: 12px;
+      margin-top: 10px;
       font-size: 13px;
       color: #444;
+    }
+
+    #debug {
+      margin-top: 15px;
+      padding: 10px;
+      background: #f4f4f4;
+      border: 1px solid #ddd;
+      font-size: 12px;
       white-space: pre-wrap;
+      direction: ltr;
     }
   </style>
 </head>
+
 <body>
-  <button id="btn" disabled>פתח ב-Power Apps V1</button>
+  <button id="btn" disabled>פתח (DEBUG)</button>
   <div id="status">טוען...</div>
+  <div id="debug"></div>
 
   <script>
-    const APP_URL = "https://www.google.com";
-// const APP_URL = "https://apps.powerapps.com/play/appId=APP_ID_HERE";
-// const APP_URL = "https://apps.powerapps.com/play/appId=APP_ID_HERE";
+    const APP_URL = "https://example.com"; 
+    // const APP_URL = "https://apps.powerapps.com/play?appId=APP_ID_HERE";
 
     function setStatus(text) {
       document.getElementById("status").textContent = text;
     }
 
+    function setDebug(obj) {
+      document.getElementById("debug").textContent = JSON.stringify(obj, null, 2);
+    }
+
     Office.onReady(function () {
       const btn = document.getElementById("btn");
       btn.disabled = false;
-      setStatus("מוכן.");
+
+      setStatus("מוכן");
 
       btn.onclick = function () {
         try {
           const item = Office.context.mailbox && Office.context.mailbox.item;
 
           if (!item) {
-            setStatus("לא נמצא מייל פתוח.");
+            setStatus("❌ לא נמצא מייל פתוח");
             return;
           }
 
@@ -56,6 +75,7 @@
           const subject = item.subject || "";
 
           let msgId = rawItemId;
+
           if (Office.context.mailbox.convertToRestId && rawItemId) {
             msgId = Office.context.mailbox.convertToRestId(
               rawItemId,
@@ -63,15 +83,28 @@
             );
           }
 
+          const separator = APP_URL.includes("?") ? "&" : "?";
+
           const url = APP_URL
-            + "&msgId=" + encodeURIComponent(msgId)
+            + separator + "msgId=" + encodeURIComponent(msgId)
             + "&convId=" + encodeURIComponent(convId)
             + "&subject=" + encodeURIComponent(subject);
 
-          setStatus("פותח את Power Apps...");
+          // 👇 DEBUG על המסך
+          setDebug({
+            rawItemId,
+            msgId,
+            convId,
+            subject,
+            finalUrl: url
+          });
+
+          setStatus("🚀 פותח...");
+
           window.open(url, "_blank");
+
         } catch (err) {
-          setStatus("שגיאה: " + (err && err.message ? err.message : err));
+          setStatus("❌ שגיאה: " + (err?.message || err));
         }
       };
     });
