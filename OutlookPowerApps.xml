@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:type="MailApp">
+
+  <Id>11111111-1111-1111-1111-111111111111</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Internal</ProviderName>
+  <DefaultLocale>he-IL</DefaultLocale>
+  <DisplayName DefaultValue="פתח ב‑Power Apps" />
+  <Description DefaultValue="פתיחת Power Apps עם מזהי מייל" />
+
+  <Hosts>
+    <Host Name="Mailbox"/>
+  </Hosts>
+
+  <Requirements>
+    <Sets>
+      <Set Name="Mailbox" MinVersion="1.5"/>
+    </Sets>
+  </Requirements>
+
+  <FormSettings>
+    <Form xsi:type="ItemRead">
+      <DesktopSettings>
+        <SourceLocation DefaultValue="https://yanivkoren.github.io/outlook-powerapps/openPowerApps.html" />
+        <RequestedHeight>120</RequestedHeight>
+      </DesktopSettings>
+    </Form>
+  </FormSettings>
+
+  <Rule xsi:type="RuleCollection" Mode="And">
+    <Rule xsi:type="ItemIs" ItemType="Message" FormType="Read"/>
+  </Rule>
+
+  <Permissions>ReadItem</Permissions>
+</OfficeApp>
