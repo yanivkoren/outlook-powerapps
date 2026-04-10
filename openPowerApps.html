@@ -53,6 +53,7 @@
 
           const rawItemId = item.itemId || "";
           const convId = item.conversationId || "";
+          const subject = item.subject || "";
 
           let msgId = rawItemId;
           if (Office.context.mailbox.convertToRestId && rawItemId) {
@@ -64,7 +65,8 @@
 
           const url = APP_URL
             + "&msgId=" + encodeURIComponent(msgId)
-            + "&convId=" + encodeURIComponent(convId);
+            + "&convId=" + encodeURIComponent(convId)
+            + "&subject=" + encodeURIComponent(subject);
 
           setStatus("פותח את Power Apps...");
           window.open(url, "_blank");
