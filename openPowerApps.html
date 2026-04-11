@@ -3,21 +3,56 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Power Apps Debug</title>
+  <title>Power Apps in Outlook</title>
   <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
 
   <style>
-    body {
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
       font-family: Arial, sans-serif;
-      margin: 16px;
       direction: rtl;
+      background: #f7f7f7;
+    }
+
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .topbar {
+      padding: 12px;
+      background: #ffffff;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     button {
       padding: 10px 14px;
       font-size: 14px;
       cursor: pointer;
-      margin-bottom: 10px;
+      border: 1px solid #cfcfcf;
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
     }
 
     #status {
@@ -27,87 +62,164 @@
     }
 
     #debug {
-      margin-top: 15px;
-      padding: 10px;
+      margin-top: 10px;
+      padding: 8px;
       background: #f4f4f4;
       border: 1px solid #ddd;
+      border-radius: 6px;
       font-size: 12px;
       white-space: pre-wrap;
       direction: ltr;
+      max-height: 140px;
+      overflow: auto;
+    }
+
+    .frame-wrap {
+      flex: 1;
+      min-height: 0;
+      background: #fff;
+    }
+
+    #appFrame {
+      display: none;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #fff;
+    }
+
+    .placeholder {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-size: 14px;
+      padding: 24px;
+      text-align: center;
     }
   </style>
 </head>
 
 <body>
-  <button id="btn" disabled>פתח (DEBUG) 1</button>
-  <div id="status">טוען...</div>
-  <div id="debug"></div>
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="title">פתיחת Power Apps מתוך המייל</div>
+
+      <div class="actions">
+        <button id="btnLoad" disabled>טען בתוך הפאנל</button>
+        <button id="btnOpenNew" disabled>פתח בלשונית חדשה</button>
+      </div>
+
+      <div id="status">טוען...</div>
+      <div id="debug"></div>
+    </div>
+
+    <div class="frame-wrap">
+      <div id="placeholder" class="placeholder">
+        לחץ על "טען בתוך הפאנל" כדי לפתוח את האפליקציה.
+      </div>
+      <iframe id="appFrame" title="Power Apps Frame"></iframe>
+    </div>
+  </div>
 
   <script>
-    const APP_URL = "https://apps.powerapps.com/play/e/default-89e846c1-57c1-4a4c-b65a-6d2107dbdb64/a/71905a42-b9c2-42d1-b242-d63f52f2b0cf?tenantId=89e846c1-57c1-4a4c-b65a-6d2107dbdb64";
-    // const APP_URL = "https://example.com"; 
-    // const APP_URL = "https://apps.powerapps.com/play?appId=APP_ID_HERE";
+    const APP_URL =
+      "https://apps.powerapps.com/play/e/default-89e846c1-57c1-4a4c-b65a-6d2107dbdb64/a/71905a42-b9c2-42d1-b242-d63f52f2b0cf?tenantId=89e846c1-57c1-4a4c-b65a-6d2107dbdb64";
+
+    const btnLoad = document.getElementById("btnLoad");
+    const btnOpenNew = document.getElementById("btnOpenNew");
+    const statusEl = document.getElementById("status");
+    const debugEl = document.getElementById("debug");
+    const frame = document.getElementById("appFrame");
+    const placeholder = document.getElementById("placeholder");
+
+    let lastUrl = "";
 
     function setStatus(text) {
-      document.getElementById("status").textContent = text;
+      statusEl.textContent = text;
     }
 
     function setDebug(obj) {
-      document.getElementById("debug").textContent = JSON.stringify(obj, null, 2);
+      debugEl.textContent = JSON.stringify(obj, null, 2);
+    }
+
+    function buildAppUrl() {
+      const item = Office.context.mailbox && Office.context.mailbox.item;
+
+      if (!item) {
+        throw new Error("לא נמצא מייל פתוח");
+      }
+
+      const rawItemId = item.itemId || "";
+      const convId = item.conversationId || "";
+      const subject = item.subject || "";
+
+      let msgId = rawItemId;
+
+      if (Office.context.mailbox.convertToRestId && rawItemId) {
+        msgId = Office.context.mailbox.convertToRestId(
+          rawItemId,
+          Office.MailboxEnums.RestVersion.v2_0
+        );
+      }
+
+      const separator = APP_URL.includes("?") ? "&" : "?";
+
+      const url =
+        APP_URL +
+        separator +
+        "msgId=" + encodeURIComponent(msgId) +
+        "&convId=" + encodeURIComponent(convId) +
+        "&subject=" + encodeURIComponent(subject);
+
+      setDebug({
+        rawItemId,
+        msgId,
+        convId,
+        subject,
+        finalUrl: url
+      });
+
+      return url;
+    }
+
+    function loadInFrame() {
+      try {
+        const url = buildAppUrl();
+        lastUrl = url;
+
+        placeholder.style.display = "none";
+        frame.style.display = "block";
+
+        setStatus("טוען את האפליקציה בתוך הפאנל...");
+        frame.src = url;
+      } catch (err) {
+        setStatus("שגיאה: " + (err?.message || err));
+      }
+    }
+
+    function openInNewTab() {
+      try {
+        const url = lastUrl || buildAppUrl();
+        lastUrl = url;
+        window.open(url, "_blank");
+      } catch (err) {
+        setStatus("שגיאה: " + (err?.message || err));
+      }
     }
 
     Office.onReady(function () {
-      const btn = document.getElementById("btn");
-      btn.disabled = false;
-
+      btnLoad.disabled = false;
+      btnOpenNew.disabled = false;
       setStatus("מוכן");
 
-      btn.onclick = function () {
-        try {
-          const item = Office.context.mailbox && Office.context.mailbox.item;
+      btnLoad.addEventListener("click", loadInFrame);
+      btnOpenNew.addEventListener("click", openInNewTab);
 
-          if (!item) {
-            setStatus("❌ לא נמצא מייל פתוח");
-            return;
-          }
-
-          const rawItemId = item.itemId || "";
-          const convId = item.conversationId || "";
-          const subject = item.subject || "";
-
-          let msgId = rawItemId;
-
-          if (Office.context.mailbox.convertToRestId && rawItemId) {
-            msgId = Office.context.mailbox.convertToRestId(
-              rawItemId,
-              Office.MailboxEnums.RestVersion.v2_0
-            );
-          }
-
-          const separator = APP_URL.includes("?") ? "&" : "?";
-
-          const url = APP_URL
-            + separator + "msgId=" + encodeURIComponent(msgId)
-            + "&convId=" + encodeURIComponent(convId)
-            + "&subject=" + encodeURIComponent(subject);
-
-          // 👇 DEBUG על המסך
-          setDebug({
-            rawItemId,
-            msgId,
-            convId,
-            subject,
-            finalUrl: url
-          });
-
-          setStatus("🚀 פותח...");
-
-          window.open(url, "_blank");
-
-        } catch (err) {
-          setStatus("❌ שגיאה: " + (err?.message || err));
-        }
-      };
+      frame.addEventListener("load", function () {
+        setStatus("האפליקציה נטענה בפאנל");
+      });
     });
   </script>
 </body>
